@@ -353,4 +353,18 @@ export const others = [
 			/^https?:\/\/(www\.)?(a\.co|z\.cn)\/.+/i,
 		],
 	},
+	{
+		name: 'core-embed/giphy',
+		settings: {
+			title: 'Giphy',
+			icon: embedPhotoIcon,
+			keywords: [ __( 'gif' ) ],
+			description: __( 'Embed Giphy content.' ),
+		},
+		patterns: [
+			/^https?:\/\/giphy\.com\/gifs+\/.+/i,
+			/^https?:\/\/gph\.is+\/.+/i,
+			/^https?:\/\/media\.giphy\.com\/media\/.*\/giphy\.gif+\/.+/i,
+		],
+	},
 ];
