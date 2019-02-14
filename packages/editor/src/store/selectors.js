@@ -588,9 +588,9 @@ export function isEditedPostDateFloating( state ) {
 	// however a post can be set to private in the editor, but not yet saved
 	// to the database. In this case, the date should still be considered
 	// floating until the status is offically saved.
-	if ( status === 'draft' || 
-		status === 'auto-draft' || 
-		status === 'pending' || 
+	if ( status === 'draft' ||
+		status === 'auto-draft' ||
+		status === 'pending' ||
 		( status === 'private' && status !== savedStatus ) ) {
 		return date === modified;
 	}
