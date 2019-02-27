@@ -6,6 +6,7 @@ module.exports = {
 		'@wordpress/dependency-group': 'error',
 		'@wordpress/gutenberg-phase': 'error',
 		'@wordpress/no-unused-vars-before-return': 'error',
+		'@wordpress/package-side-effects': 'error',
 		'@wordpress/valid-sprintf': 'error',
 		'no-restricted-syntax': [
 			'error',
