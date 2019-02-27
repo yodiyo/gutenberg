@@ -25,6 +25,7 @@ const listContentSchema = {
 // Recursion is needed.
 // Possible: ul > li > ul.
 // Impossible: ul > ul.
+// eslint-disable-next-line @wordpress/package-side-effects
 [ 'ul', 'ol' ].forEach( ( tag ) => {
 	listContentSchema[ tag ].children = {
 		li: {
