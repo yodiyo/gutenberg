@@ -32,6 +32,7 @@
 		"access": "public"
 	},
 	"sideEffects": [
+		"src/index.js",
 		"src/store/index.js"
 	]
 }

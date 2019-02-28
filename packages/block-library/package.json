@@ -46,6 +46,7 @@
 		"access": "public"
 	},
 	"sideEffects": [
+		"src/index.js",
 		"src/index.native.js"
 	]
 }
