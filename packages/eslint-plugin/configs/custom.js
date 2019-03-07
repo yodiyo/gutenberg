@@ -24,4 +24,10 @@ module.exports = {
 			},
 		],
 	},
+	overrides: {
+		files: [ '**/test/*.js', '**/benchmark/*.js' ],
+		rules: {
+			'@wordpress/package-side-effects': 'off',
+		},
+	},
 };
