@@ -3,7 +3,7 @@
  */
 import { __ } from '@wordpress/i18n';
 import { createBlock } from '@wordpress/blocks';
-import { SVG, Path } from '@wordpress/components';
+import { Hr, SVG, Path } from '@wordpress/components';
 
 export const name = 'core/separator';
 
@@ -42,7 +42,7 @@ export const settings = {
 	},
 
 	edit( { className } ) {
-		return <hr className={ className } />;
+		return <Hr className={ className } />;
 	},
 
 	save() {
