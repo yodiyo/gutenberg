@@ -11,4 +11,8 @@ module.exports = {
 		'node_modules',
 		'scripts/config/puppeteer.config.js',
 	],
+	reporters: [
+		'default',
+		'<rootDir>/config/performance-reporter.js',
+	],
 };
