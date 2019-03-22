@@ -94,14 +94,13 @@ function gutenberg_legacy_widget_settings( $settings ) {
 	// Add widgets implemented as a class to the available_legacy_widgets widgets array.
 	// All widgets implemented as a class have an edit form.
 	foreach ( $wp_widget_factory->widgets as $class => $widget_obj ) {
-		if ( ! in_array( $class, $core_widgets ) ) {
-			$available_legacy_widgets[ $class ] = array(
-				'name'             => html_entity_decode( $widget_obj->name ),
-				'description'      => html_entity_decode( $widget_obj->widget_options['description'] ),
-				'isCallbackWidget' => false,
-				'hasEditForm'      => true,
-			);
-		}
+		$available_legacy_widgets[ $class ] = array(
+			'name'             => html_entity_decode( $widget_obj->name ),
+			'description'      => html_entity_decode( $widget_obj->widget_options['description'] ),
+			'isCallbackWidget' => false,
+			'hasEditForm'      => true,
+			'isHidden'         => in_array( $class, $core_widgets ),
+		);
 	}
 	// Add widgets registered using wp_register_sidebar_widget.
 	foreach ( $wp_registered_widgets as $widget_id => $widget_obj ) {
