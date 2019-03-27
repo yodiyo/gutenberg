@@ -15,6 +15,9 @@ import * as more from './more';
 import * as paragraph from './paragraph';
 import * as image from './image';
 import * as nextpage from './nextpage';
+import * as UnsupportedBlock from './mobile/unsupported-block';
+
+export { UnsupportedBlock };
 
 export const registerCoreBlocks = () => {
 	[
