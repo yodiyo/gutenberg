@@ -7,7 +7,7 @@ import { FlatList, Text, TouchableHighlight, View } from 'react-native';
  * WordPress dependencies
  */
 import { SVG, BottomSheet } from '@wordpress/components';
-//import { UnsupportedBlock } from '@wordpress/block-library';
+import { UnsupportedBlock } from '@wordpress/block-library';
 import { Component } from '@wordpress/element';
 import { withSelect } from '@wordpress/data';
 import { compose } from '@wordpress/compose';
@@ -103,7 +103,7 @@ export default compose( [
 
 		return {
 			rootChildBlocks: getChildBlockNames( destinationRootBlockName ),
-			items: inserterItems.filter( ( { name } ) => name !== 'gmobile/unsupported' ),
+			items: inserterItems.filter( ( { name } ) => name !== UnsupportedBlock.name ),
 			destinationRootClientId,
 		};
 	} ),
