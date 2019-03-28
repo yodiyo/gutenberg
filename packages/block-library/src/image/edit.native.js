@@ -311,19 +311,17 @@ class ImageEdit extends React.Component {
 				} }
 			/>
 		);
-
+									
 		if ( ! url ) {
 			return (
-					<MediaUpload/>
-			);
-			/*	( 
 				<View style={ { flex: 1 } } >
-					{ getMediaOptions() }
-					<MediaPlaceholder
-						onMediaOptionsPressed={ onMediaOptionsButtonPressed }
+					<MediaUpload 	
+						render={ ( { open } ) => (
+							<View/>
+						) }
 					/>
-				</View> 
-				);*/
+				</View>
+			);
 		}
 
 		const showSpinner = this.state.isUploadInProgress;

@@ -4,7 +4,7 @@
 import React from 'react';
 import { View } from 'react-native';
 
-//import { __ } from '@wordpress/i18n';
+import { __ } from '@wordpress/i18n';
 //import { Picker } from '@wordpress/editor';
 
 const MEDIA_UPLOAD_BOTTOM_SHEET_VALUE_CHOOSE_FROM_DEVICE = 'choose_from_device';
@@ -46,11 +46,13 @@ class MediaUpload extends React.Component {
 			/>
 		);
 		*/
-        return (
+      /*  return (
 			<View/>
-		);
-        //return this.props.render( { open: this.openModal } );
+		);*/
+        return this.props.render( { open: this.openModal } );
 
 	}
 
 }
+
+export default MediaUpload;
