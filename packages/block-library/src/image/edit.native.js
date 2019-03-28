@@ -24,6 +24,7 @@ import {
 } from '@wordpress/components';
 import {
 	MediaPlaceholder,
+	MediaUpload,
 	RichText,
 	BlockControls,
 	InspectorControls,
@@ -313,13 +314,16 @@ class ImageEdit extends React.Component {
 
 		if ( ! url ) {
 			return (
+					<MediaUpload/>
+			);
+			/*	( 
 				<View style={ { flex: 1 } } >
 					{ getMediaOptions() }
 					<MediaPlaceholder
 						onMediaOptionsPressed={ onMediaOptionsButtonPressed }
 					/>
-				</View>
-			);
+				</View> 
+				);*/
 		}
 
 		const showSpinner = this.state.isUploadInProgress;
