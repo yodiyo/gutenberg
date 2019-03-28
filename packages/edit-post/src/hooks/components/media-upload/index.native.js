@@ -12,7 +12,6 @@ const MEDIA_UPLOAD_BOTTOM_SHEET_VALUE_TAKE_PHOTO = 'take_photo';
 const MEDIA_UPLOAD_BOTTOM_SHEET_VALUE_WORD_PRESS_LIBRARY = 'wordpress_media_library';
 
 class MediaUpload extends React.Component {
-    picker: Picker;
 
 	getMediaOptionsItems() {
 		return [
