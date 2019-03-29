@@ -317,7 +317,9 @@ class ImageEdit extends React.Component {
 				<View style={ { flex: 1 } } >
 					<MediaUpload 	
 						render={ ( { open } ) => (
-							<View/>
+							 <MediaPlaceholder
+                        		onMediaOptionsPressed={ onMediaOptionsButtonPressed }
+                   			 />
 						) }
 					/>
 				</View>

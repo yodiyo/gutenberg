@@ -12,7 +12,6 @@ import { registerBlockType, setUnregisteredTypeHandlerName, unregisterBlockType 
  * Internal dependencies
  */
 import './store';
-import './hooks';
 
 /**
  * Initializes the Editor.
