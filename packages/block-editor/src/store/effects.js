@@ -136,7 +136,7 @@ export default {
 		);
 
 		const newIdentifier = findKey( updatedAttributes, ( v ) =>
-			v.indexOf( START_OF_SELECTED_AREA ) !== -1
+			typeof v === 'string' && v.indexOf( START_OF_SELECTED_AREA ) !== -1
 		);
 		const convertedHtml = updatedAttributes[ newIdentifier ];
 		const multilineTagA = blockAType.attributes[ newIdentifier ].multiline;
