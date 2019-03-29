@@ -314,15 +314,13 @@ class ImageEdit extends React.Component {
 									
 		if ( ! url ) {
 			return (
-				<View style={ { flex: 1 } } >
-					<MediaUpload 	
-						render={ ( { open } ) => (
-							 <MediaPlaceholder
-                        		onMediaOptionsPressed={ onMediaOptionsButtonPressed }
-                   			 />
-						) }
-					/>
-				</View>
+				<MediaUpload 	
+					render={ ( { open } ) => (
+						<MediaPlaceholder
+							onMediaOptionsPressed={ open }
+						/>
+					) }
+				/>
 			);
 		}
 

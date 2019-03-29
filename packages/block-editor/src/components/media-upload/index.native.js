@@ -5,14 +5,18 @@ import React from 'react';
 import { View } from 'react-native';
 
 import { __ } from '@wordpress/i18n';
-import { Picker } from '@wordpress/editor';
+import Picker from '../../../../editor/src/components/mobile/picker/';
 
 const MEDIA_UPLOAD_BOTTOM_SHEET_VALUE_CHOOSE_FROM_DEVICE = 'choose_from_device';
 const MEDIA_UPLOAD_BOTTOM_SHEET_VALUE_TAKE_PHOTO = 'take_photo';
 const MEDIA_UPLOAD_BOTTOM_SHEET_VALUE_WORD_PRESS_LIBRARY = 'wordpress_media_library';
 
 class MediaUpload extends React.Component {
-	picker: Picker;
+	//picker: Picker;
+
+	constructor( props ) {
+		super( props );
+	}
 
 	getMediaOptionsItems() {
 		return [
@@ -22,18 +26,20 @@ class MediaUpload extends React.Component {
 		];
 	}
 
-    openModal() {
-        this.picker.presentPicker();
-	}
-
 	render() {
 
-        const mediaOptions = this.getMediaOptionsItems();
+		const mediaOptions = this.getMediaOptionsItems();
+
+		let picker;
+
+		const onPickerPresent = () => {
+			picker.presentPicker();
+		};
 
 		const getMediaOptions = () => (
 			<Picker
 				hideCancelButton={ true }
-				ref={ ( instance ) => this.picker = instance }
+				ref={ ( instance ) => picker = instance }
 				options={ mediaOptions }
 				onChange={ ( value ) => {
 					if ( value === MEDIA_UPLOAD_BOTTOM_SHEET_VALUE_CHOOSE_FROM_DEVICE ) {
@@ -49,7 +55,12 @@ class MediaUpload extends React.Component {
        /*  return (
 			<View/>
 		);*/
-        return this.props.render( { open: this.openModal } );
+        return (
+			<View style={ { flex: 1 } }>
+				{ getMediaOptions() }
+				{ this.props.render( { open: onPickerPresent } ) }
+			</View>
+		);
 
 	}
 
