@@ -5,13 +5,14 @@ import React from 'react';
 import { View } from 'react-native';
 
 import { __ } from '@wordpress/i18n';
-//import { Picker } from '@wordpress/editor';
+import { Picker } from '@wordpress/editor';
 
 const MEDIA_UPLOAD_BOTTOM_SHEET_VALUE_CHOOSE_FROM_DEVICE = 'choose_from_device';
 const MEDIA_UPLOAD_BOTTOM_SHEET_VALUE_TAKE_PHOTO = 'take_photo';
 const MEDIA_UPLOAD_BOTTOM_SHEET_VALUE_WORD_PRESS_LIBRARY = 'wordpress_media_library';
 
 class MediaUpload extends React.Component {
+	picker: Picker;
 
 	getMediaOptionsItems() {
 		return [
@@ -29,7 +30,7 @@ class MediaUpload extends React.Component {
 
         const mediaOptions = this.getMediaOptionsItems();
 
-	/*	const getMediaOptions = () => (
+		const getMediaOptions = () => (
 			<Picker
 				hideCancelButton={ true }
 				ref={ ( instance ) => this.picker = instance }
@@ -45,8 +46,7 @@ class MediaUpload extends React.Component {
 				} }
 			/>
 		);
-		*/
-      /*  return (
+       /*  return (
 			<View/>
 		);*/
         return this.props.render( { open: this.openModal } );
