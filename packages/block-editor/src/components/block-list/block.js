@@ -12,7 +12,6 @@ import {
 	focus,
 	isTextField,
 	placeCaretAtHorizontalEdge,
-	placeCaretAtVerticalEdge,
 } from '@wordpress/dom';
 import { BACKSPACE, DELETE, ENTER } from '@wordpress/keycodes';
 import {
@@ -146,21 +145,15 @@ export class BlockListBlock extends Component {
 
 		// If reversed (e.g. merge via backspace), use the last in the set of
 		// tabbables.
-		const isReverse = -1 === initialPosition;
-		const target = ( isReverse ? last : first )( textInputs );
+		const isReverse = -1 !== initialPosition;
+		const target = ( isReverse ? first : last )( textInputs );
 
 		if ( ! target ) {
 			this.wrapperNode.focus();
 			return;
 		}
 
-		target.focus();
-
-		// In reverse case, need to explicitly place caret position.
-		if ( isReverse ) {
-			placeCaretAtHorizontalEdge( target, true );
-			placeCaretAtVerticalEdge( target, true );
-		}
+		placeCaretAtHorizontalEdge( target, isReverse );
 	}
 
 	setAttributes( attributes ) {

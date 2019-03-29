@@ -5,7 +5,6 @@ import classnames from 'classnames';
 import {
 	find,
 	isNil,
-	isEqual,
 	omit,
 	pickBy,
 	get,
@@ -182,8 +181,9 @@ export class RichText extends Component {
 	 * @return {Object} The current record (value and selection).
 	 */
 	getRecord() {
-		const { formats, replacements, text } = this.formatToValue( this.props.value );
-		const { start, end, selectedFormat } = this.state;
+		const { value, selectionStart: start, selectionEnd: end } = this.props;
+		const { formats, replacements, text } = this.formatToValue( value );
+		const { selectedFormat } = this.state;
 
 		return { formats, replacements, text, start, end, selectedFormat };
 	}
@@ -407,9 +407,9 @@ export class RichText extends Component {
 			selectedFormat = this.formatPlaceholder.length;
 
 			if ( selectedFormat > 0 ) {
-				formats[ this.state.start ] = this.formatPlaceholder;
+				formats[ this.props.selectionStart ] = this.formatPlaceholder;
 			} else {
-				delete formats[ this.state.start ];
+				delete formats[ this.props.selectionStart ];
 			}
 		} else if ( selectedFormat > 0 ) {
 			const formatsBefore = formats[ start - 1 ] || [];
@@ -423,9 +423,9 @@ export class RichText extends Component {
 
 			source = source.slice( 0, selectedFormat );
 
-			formats[ this.state.start ] = source;
+			formats[ this.props.selectionStart ] = source;
 		} else {
-			delete formats[ this.state.start ];
+			delete formats[ this.props.selectionStart ];
 		}
 
 		const change = { formats, replacements, text, start, end, selectedFormat };
@@ -469,7 +469,7 @@ export class RichText extends Component {
 		const value = this.createRecord();
 		const { start, end, formats } = value;
 
-		if ( start !== this.state.start || end !== this.state.end ) {
+		if ( start !== this.savedSelectionStart || end !== this.savedSelectionEnd ) {
 			const isCaretWithinFormattedText = this.props.isCaretWithinFormattedText;
 
 			if ( ! isCaretWithinFormattedText && formats[ start ] ) {
@@ -488,8 +488,11 @@ export class RichText extends Component {
 				selectedFormat = Math.min( formatsBefore.length, formatsAfter.length );
 			}
 
-			this.setState( { start, end, selectedFormat } );
 			this.applyRecord( { ...value, selectedFormat }, { domOnly: true } );
+			this.setState( { selectedFormat } );
+			this.props.onSelectionChange( start, end );
+			this.savedSelectionStart = start;
+			this.savedSelectionEnd = end;
 
 			delete this.formatPlaceholder;
 
@@ -545,7 +548,10 @@ export class RichText extends Component {
 
 		this.savedContent = this.valueToFormat( record );
 		this.props.onChange( this.savedContent );
-		this.setState( { start, end, selectedFormat } );
+		this.setState( { selectedFormat } );
+		this.props.onSelectionChange( start, end );
+		this.savedSelectionStart = start;
+		this.savedSelectionEnd = end;
 
 		if ( ! withoutHistory ) {
 			this.onCreateUndoLevel();
@@ -831,12 +837,17 @@ export class RichText extends Component {
 
 		const newPos = value.start + ( isReverse ? -1 : 1 );
 
-		this.setState( { start: newPos, end: newPos } );
+		newSelectedFormat = isReverse ? formatsBefore.length : formatsAfter.length;
+
+		this.setState( { selectedFormat: newSelectedFormat } );
+		this.props.onSelectionChange( newPos, newPos );
+		this.savedSelectionStart = newPos;
+		this.savedSelectionEnd = newPos;
 		this.applyRecord( {
 			...value,
 			start: newPos,
 			end: newPos,
-			selectedFormat: isReverse ? formatsBefore.length : formatsAfter.length,
+			selectedFormat: newSelectedFormat,
 		} );
 	}
 
@@ -915,34 +926,29 @@ export class RichText extends Component {
 
 	componentDidUpdate( prevProps ) {
 		const { tagName, value, isSelected } = this.props;
+		const record = this.getRecord();
 
 		if (
 			tagName === prevProps.tagName &&
 			value !== prevProps.value &&
 			value !== this.savedContent
 		) {
-			// Handle deprecated `children` and `node` sources.
-			// The old way of passing a value with the `node` matcher required
-			// the value to be mapped first, creating a new array each time, so
-			// a shallow check wouldn't work. We need to check deep equality.
-			// This is only executed for a deprecated API and will eventually be
-			// removed.
-			if ( Array.isArray( value ) && isEqual( value, this.savedContent ) ) {
-				return;
-			}
-
-			const record = this.formatToValue( value );
-
-			if ( isSelected ) {
-				const prevRecord = this.formatToValue( prevProps.value );
-				const length = getTextContent( prevRecord ).length;
-				record.start = length;
-				record.end = length;
+			if ( ! isSelected ) {
+				delete record.start;
+				delete record.end;
 			}
 
 			this.applyRecord( record );
-			this.savedContent = value;
+		} else if ( isSelected && (
+			this.savedSelectionStart !== record.start ||
+			this.savedSelectionEnd !== record.end
+		) ) {
+			this.applyRecord( record );
 		}
+
+		this.savedContent = value;
+		this.savedSelectionStart = record.start;
+		this.savedSelectionEnd = record.end;
 
 		// If any format props update, reapply value.
 		const shouldReapply = Object.keys( this.props ).some( ( name ) => {
@@ -961,13 +967,9 @@ export class RichText extends Component {
 		} );
 
 		if ( shouldReapply ) {
-			const record = this.formatToValue( value );
-
-			// Maintain the previous selection if the instance is currently
-			// selected.
-			if ( isSelected ) {
-				record.start = this.state.start;
-				record.end = this.state.end;
+			if ( ! isSelected ) {
+				delete record.start;
+				delete record.end;
 			}
 
 			this.applyRecord( record );
@@ -1191,12 +1193,30 @@ const RichTextContainer = compose( [
 			};
 		}
 
-		// Ensures that only one RichText component can be focused.
-		return {
+		const props = {
+			// Ensures that only one RichText component can be focused.
 			isSelected: context.isSelected && context.focusedElement === ownProps.instanceId,
 			setFocusedElement: context.setFocusedElement,
 			clientId: context.clientId,
 		};
+
+		const identifier = ownProps.identifier || ownProps.instanceId;
+
+		if (
+			context.selectionStart &&
+			context.selectionStart.identifier === identifier
+		) {
+			props.selectionStart = context.selectionStart.offset;
+		}
+
+		if (
+			context.selectionEnd &&
+			context.selectionEnd.identifier === identifier
+		) {
+			props.selectionEnd = context.selectionEnd.offset;
+		}
+
+		return props;
 	} ),
 	withSelect( ( select ) => {
 		// This should probably be moved to the block editor settings.
@@ -1210,17 +1230,20 @@ const RichTextContainer = compose( [
 			formatTypes: getFormatTypes(),
 		};
 	} ),
-	withDispatch( ( dispatch ) => {
+	withDispatch( ( dispatch, { identifier, clientId, instanceId } ) => {
 		const {
 			__unstableMarkLastChangeAsPersistent,
 			enterFormattedText,
 			exitFormattedText,
+			selectionChange,
 		} = dispatch( 'core/block-editor' );
 
 		return {
 			onCreateUndoLevel: __unstableMarkLastChangeAsPersistent,
 			onEnterFormattedText: enterFormattedText,
 			onExitFormattedText: exitFormattedText,
+			onSelectionChange: ( start, end ) =>
+				selectionChange( clientId, identifier || instanceId, start, end ),
 		};
 	} ),
 	withSafeTimeout,

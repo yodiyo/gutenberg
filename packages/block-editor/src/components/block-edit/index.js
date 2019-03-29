@@ -2,6 +2,7 @@
  * WordPress dependencies
  */
 import { Component } from '@wordpress/element';
+import { withSelect } from '@wordpress/data';
 
 /**
  * Internal dependencies
@@ -17,7 +18,6 @@ class BlockEdit extends Component {
 
 		this.state = {
 			focusedElement: null,
-			setFocusedElement: this.setFocusedElement,
 		};
 	}
 
@@ -30,23 +30,33 @@ class BlockEdit extends Component {
 		} );
 	}
 
-	static getDerivedStateFromProps( props ) {
-		const { clientId, name, isSelected } = props;
-
-		return {
-			name,
-			isSelected,
-			clientId,
-		};
-	}
-
 	render() {
+		const value = {
+			setFocusedElement: this.setFocusedElement,
+			focusedElement: this.state.focusedElement,
+			name: this.props.name,
+			isSelected: this.props.isSelected,
+			clientId: this.props.clientId,
+		};
+
+		if ( this.props.isSelected ) {
+			value.selectionStart = this.props.selectionStart;
+			value.selectionEnd = this.props.selectionEnd;
+		}
+
 		return (
-			<BlockEditContextProvider value={ this.state }>
+			<BlockEditContextProvider value={ value }>
 				<Edit { ...this.props } />
 			</BlockEditContextProvider>
 		);
 	}
 }
 
-export default BlockEdit;
+export default withSelect( ( select ) => {
+	const { getSelectionStart, getSelectionEnd } = select( 'core/block-editor' );
+
+	return {
+		selectionStart: getSelectionStart(),
+		selectionEnd: getSelectionEnd(),
+	};
+} )( BlockEdit );

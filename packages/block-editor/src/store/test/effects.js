@@ -23,6 +23,7 @@ import actions, {
 	replaceBlocks,
 	resetBlocks,
 	selectBlock,
+	selectionChange,
 	setTemplateValidity,
 } from '../actions';
 import effects, { validateBlocksToTemplate } from '../effects';
@@ -32,7 +33,14 @@ import applyMiddlewares from '../middlewares';
 import '../../';
 
 describe( 'effects', () => {
-	const defaultBlockSettings = { save: () => 'Saved', category: 'common', title: 'block title' };
+	const defaultBlockSettings = {
+		attributes: {
+			content: {},
+		},
+		save: () => 'Saved',
+		category: 'common',
+		title: 'block title',
+	};
 
 	describe( '.MERGE_BLOCKS', () => {
 		const handler = effects.MERGE_BLOCKS;
@@ -69,6 +77,9 @@ describe( 'effects', () => {
 
 		it( 'should merge the blocks if blocks of the same type', () => {
 			registerBlockType( 'core/test-block', {
+				attributes: {
+					content: {},
+				},
 				merge( attributes, attributesToMerge ) {
 					return {
 						content: attributes.content + ' ' + attributesToMerge.content,
@@ -92,11 +103,24 @@ describe( 'effects', () => {
 				return blockA.clientId === clientId ? blockA : blockB;
 			};
 			const dispatch = jest.fn();
-			const getState = () => ( {} );
+			const getState = () => ( {
+				blockSelection: {
+					start: {
+						block: blockB.clientId,
+						identifier: 'content',
+						offset: 0,
+					},
+				},
+			} );
 			handler( mergeBlocks( blockA.clientId, blockB.clientId ), { dispatch, getState } );
 
 			expect( dispatch ).toHaveBeenCalledTimes( 2 );
-			expect( dispatch ).toHaveBeenCalledWith( selectBlock( 'chicken', -1 ) );
+			expect( dispatch ).toHaveBeenCalledWith( selectionChange(
+				blockA.clientId,
+				'content',
+				'chicken'.length + 1,
+				'chicken'.length + 1,
+			) );
 			expect( dispatch ).toHaveBeenCalledWith( {
 				...replaceBlocks( [ 'chicken', 'ribs' ], [ {
 					clientId: 'chicken',
@@ -109,6 +133,9 @@ describe( 'effects', () => {
 
 		it( 'should not merge the blocks have different types without transformation', () => {
 			registerBlockType( 'core/test-block', {
+				attributes: {
+					content: {},
+				},
 				merge( attributes, attributesToMerge ) {
 					return {
 						content: attributes.content + ' ' + attributesToMerge.content,
@@ -126,14 +153,22 @@ describe( 'effects', () => {
 			};
 			const blockB = {
 				clientId: 'ribs',
-				name: 'core/test-block2',
+				name: 'core/test-block-2',
 				attributes: { content: 'ribs' },
 			};
 			selectors.getBlock = ( state, clientId ) => {
 				return blockA.clientId === clientId ? blockA : blockB;
 			};
 			const dispatch = jest.fn();
-			const getState = () => ( {} );
+			const getState = () => ( {
+				blockSelection: {
+					start: {
+						block: blockB.clientId,
+						identifier: 'content',
+						offset: 0,
+					},
+				},
+			} );
 			handler( mergeBlocks( blockA.clientId, blockB.clientId ), { dispatch, getState } );
 
 			expect( dispatch ).not.toHaveBeenCalled();
@@ -157,7 +192,7 @@ describe( 'effects', () => {
 			} );
 			registerBlockType( 'core/test-block-2', {
 				attributes: {
-					content: {
+					content2: {
 						type: 'string',
 					},
 				},
@@ -190,11 +225,24 @@ describe( 'effects', () => {
 				return blockA.clientId === clientId ? blockA : blockB;
 			};
 			const dispatch = jest.fn();
-			const getState = () => ( {} );
+			const getState = () => ( {
+				blockSelection: {
+					start: {
+						block: blockB.clientId,
+						identifier: 'content2',
+						offset: 0,
+					},
+				},
+			} );
 			handler( mergeBlocks( blockA.clientId, blockB.clientId ), { dispatch, getState } );
 
 			expect( dispatch ).toHaveBeenCalledTimes( 2 );
-			// expect( dispatch ).toHaveBeenCalledWith( focusBlock( 'chicken', { offset: -1 } ) );
+			expect( dispatch ).toHaveBeenCalledWith( selectionChange(
+				blockA.clientId,
+				'content',
+				'chicken'.length + 1,
+				'chicken'.length + 1,
+			) );
 			expect( dispatch ).toHaveBeenCalledWith( {
 				...replaceBlocks( [ 'chicken', 'ribs' ], [ {
 					clientId: 'chicken',
