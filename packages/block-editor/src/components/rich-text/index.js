@@ -939,7 +939,7 @@ export class RichText extends Component {
 			}
 
 			this.applyRecord( record );
-		} else if ( isSelected && (
+		} else if ( isSelected && ! prevProps.isSelected && (
 			this.savedSelectionStart !== record.start ||
 			this.savedSelectionEnd !== record.end
 		) ) {
