@@ -560,7 +560,8 @@ export function getNextBlockClientId( state, startClientId ) {
  */
 export function getSelectedBlocksInitialCaretPosition( state ) {
 	const { start, end } = state.blockSelection;
-	if ( start !== end || ! start ) {
+
+	if ( start.block !== end.block || ! start.block ) {
 		return null;
 	}
 

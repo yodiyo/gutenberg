@@ -764,7 +764,10 @@ export function blockSelection( state = BLOCK_SELECTION_INITIAL_STATE, action ) 
 				return state;
 			}
 
-			return BLOCK_SELECTION_INITIAL_STATE;
+			return {
+				initialPosition: state.initialPosition,
+				...BLOCK_SELECTION_INITIAL_STATE,
+			};
 		case 'REPLACE_BLOCKS': {
 			if ( action.clientIds.indexOf( state.start.block ) === -1 ) {
 				return state;

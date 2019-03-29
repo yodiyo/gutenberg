@@ -145,8 +145,8 @@ export class BlockListBlock extends Component {
 
 		// If reversed (e.g. merge via backspace), use the last in the set of
 		// tabbables.
-		const isReverse = -1 !== initialPosition;
-		const target = ( isReverse ? first : last )( textInputs );
+		const isReverse = -1 === initialPosition;
+		const target = ( isReverse ? last : first )( textInputs );
 
 		if ( ! target ) {
 			this.wrapperNode.focus();
