@@ -118,7 +118,6 @@ export class RichText extends Component {
 		this.onKeyDown = this.onKeyDown.bind( this );
 		this.onPaste = this.onPaste.bind( this );
 		this.onCreateUndoLevel = this.onCreateUndoLevel.bind( this );
-		this.setFocusedElement = this.setFocusedElement.bind( this );
 		this.onInput = this.onInput.bind( this );
 		this.onCompositionEnd = this.onCompositionEnd.bind( this );
 		this.onSelectionChange = this.onSelectionChange.bind( this );
@@ -166,12 +165,6 @@ export class RichText extends Component {
 			this.editableRef = node;
 		} else {
 			delete this.editableRef;
-		}
-	}
-
-	setFocusedElement() {
-		if ( this.props.setFocusedElement ) {
-			this.props.setFocusedElement( this.props.instanceId );
 		}
 	}
 
@@ -1097,9 +1090,7 @@ export class RichText extends Component {
 		const record = this.getRecord();
 
 		return (
-			<div className={ classes }
-				onFocus={ this.setFocusedElement }
-			>
+			<div className={ classes } onFocus={ this.onSelectionChange }>
 				{ isSelected && this.multilineTag === 'li' && (
 					<ListEdit
 						onTagNameChange={ onTagNameChange }
@@ -1176,28 +1167,11 @@ RichText.defaultProps = {
 const RichTextContainer = compose( [
 	withInstanceId,
 	withBlockEditContext( ( context, ownProps ) => {
-		// When explicitly set as not selected, do nothing.
-		if ( ownProps.isSelected === false ) {
-			return {
-				clientId: context.clientId,
-			};
-		}
-		// When explicitly set as selected, use the value stored in the context instead.
-		if ( ownProps.isSelected === true ) {
-			return {
-				isSelected: context.isSelected,
-				clientId: context.clientId,
-			};
-		}
-
+		const identifier = ownProps.identifier || ownProps.instanceId;
 		const props = {
-			// Ensures that only one RichText component can be focused.
-			isSelected: context.isSelected && context.focusedElement === ownProps.instanceId,
-			setFocusedElement: context.setFocusedElement,
+			isSelected: context.isSelected && context.selectionStart.identifier === identifier,
 			clientId: context.clientId,
 		};
-
-		const identifier = ownProps.identifier || ownProps.instanceId;
 
 		if (
 			context.selectionStart &&
