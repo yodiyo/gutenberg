@@ -1090,7 +1090,7 @@ export class RichText extends Component {
 		const record = this.getRecord();
 
 		return (
-			<div className={ classes } onFocus={ this.onSelectionChange }>
+			<div className={ classes }>
 				{ isSelected && this.multilineTag === 'li' && (
 					<ListEdit
 						onTagNameChange={ onTagNameChange }
@@ -1166,42 +1166,43 @@ RichText.defaultProps = {
 
 const RichTextContainer = compose( [
 	withInstanceId,
-	withBlockEditContext( ( context, ownProps ) => {
-		const identifier = ownProps.identifier || ownProps.instanceId;
-		const props = {
-			isSelected: context.isSelected && context.selectionStart.identifier === identifier,
-			clientId: context.clientId,
-		};
-
-		if (
-			context.selectionStart &&
-			context.selectionStart.identifier === identifier
-		) {
-			props.selectionStart = context.selectionStart.offset;
-		}
-
-		if (
-			context.selectionEnd &&
-			context.selectionEnd.identifier === identifier
-		) {
-			props.selectionEnd = context.selectionEnd.offset;
-		}
-
-		return props;
-	} ),
-	withSelect( ( select ) => {
+	withBlockEditContext( ( { clientId } ) => ( { clientId } ) ),
+	withSelect( ( select, {
+		clientId,
+		instanceId,
+		identifier = instanceId,
+	} ) => {
 		// This should probably be moved to the block editor settings.
 		const { canUserUseUnfilteredHTML } = select( 'core/editor' );
-		const { isCaretWithinFormattedText } = select( 'core/block-editor' );
+		const {
+			isCaretWithinFormattedText,
+			getSelectionStart,
+			getSelectionEnd,
+		} = select( 'core/block-editor' );
 		const { getFormatTypes } = select( 'core/rich-text' );
+
+		const selectionStart = getSelectionStart();
+		const selectionEnd = getSelectionEnd();
+
+		const isSelected = (
+			selectionStart.block === clientId &&
+			selectionStart.identifier === identifier
+		);
 
 		return {
 			canUserUseUnfilteredHTML: canUserUseUnfilteredHTML(),
 			isCaretWithinFormattedText: isCaretWithinFormattedText(),
 			formatTypes: getFormatTypes(),
+			selectionStart: isSelected ? selectionStart.offset : undefined,
+			selectionEnd: isSelected ? selectionEnd.offset : undefined,
+			isSelected,
 		};
 	} ),
-	withDispatch( ( dispatch, { identifier, clientId, instanceId } ) => {
+	withDispatch( ( dispatch, {
+		clientId,
+		instanceId,
+		identifier = instanceId,
+	} ) => {
 		const {
 			__unstableMarkLastChangeAsPersistent,
 			enterFormattedText,
@@ -1213,8 +1214,9 @@ const RichTextContainer = compose( [
 			onCreateUndoLevel: __unstableMarkLastChangeAsPersistent,
 			onEnterFormattedText: enterFormattedText,
 			onExitFormattedText: exitFormattedText,
-			onSelectionChange: ( start, end ) =>
-				selectionChange( clientId, identifier || instanceId, start, end ),
+			onSelectionChange( start, end ) {
+				selectionChange( clientId, identifier, start, end );
+			},
 		};
 	} ),
 	withSafeTimeout,
