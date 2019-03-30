@@ -928,30 +928,23 @@ export class RichText extends Component {
 		const { tagName, value, isSelected } = this.props;
 		const record = this.getRecord();
 
-		if (
+		// Check if the content changed.
+		let shouldReapply = (
 			tagName === prevProps.tagName &&
 			value !== prevProps.value &&
 			value !== this.savedContent
-		) {
-			if ( ! isSelected ) {
-				delete record.start;
-				delete record.end;
-			}
+		);
 
-			this.applyRecord( record );
-		} else if ( isSelected && ! prevProps.isSelected && (
-			this.savedSelectionStart !== record.start ||
-			this.savedSelectionEnd !== record.end
-		) ) {
-			this.applyRecord( record );
-		}
+		// Check if the selection changed.
+		shouldReapply = shouldReapply || (
+			isSelected && ! prevProps.isSelected && (
+				this.savedSelectionStart !== record.start ||
+				this.savedSelectionEnd !== record.end
+			)
+		);
 
-		this.savedContent = value;
-		this.savedSelectionStart = record.start;
-		this.savedSelectionEnd = record.end;
-
-		// If any format props update, reapply value.
-		const shouldReapply = Object.keys( this.props ).some( ( name ) => {
+		// Check if any format props changed.
+		shouldReapply = shouldReapply || Object.keys( this.props ).some( ( name ) => {
 			if ( name.indexOf( 'format_' ) !== 0 ) {
 				return false;
 			}
@@ -974,6 +967,10 @@ export class RichText extends Component {
 
 			this.applyRecord( record );
 		}
+
+		this.savedContent = value;
+		this.savedSelectionStart = record.start;
+		this.savedSelectionEnd = record.end;
 	}
 
 	/**
