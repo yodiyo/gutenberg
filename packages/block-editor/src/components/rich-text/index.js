@@ -351,9 +351,16 @@ export class RichText extends Component {
 	 */
 	onFocus() {
 		const { unstableOnFocus } = this.props;
+
 		if ( unstableOnFocus ) {
 			unstableOnFocus();
 		}
+
+		const { start, end } = this.createRecord();
+
+		this.onSelectionChange( start, end );
+		this.savedSelectionStart = start;
+		this.savedSelectionEnd = end;
 
 		document.addEventListener( 'selectionchange', this.onSelectionChange );
 	}
