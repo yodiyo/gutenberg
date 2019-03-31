@@ -89,7 +89,7 @@ const globalStyle = document.createElement( 'style' );
 document.head.appendChild( globalStyle );
 
 export class RichText extends Component {
-	constructor( { value, onReplace, multiline } ) {
+	constructor( { value, onReplace, multiline, selectionStart, selectionEnd } ) {
 		super( ...arguments );
 
 		if ( multiline === true || multiline === 'p' || multiline === 'li' ) {
@@ -133,7 +133,6 @@ export class RichText extends Component {
 
 		this.formatToValue = memize( this.formatToValue.bind( this ), { size: 1 } );
 
-		this.savedContent = value;
 		this.patterns = getPatterns( {
 			onReplace,
 			valueToFormat: this.valueToFormat,
@@ -145,6 +144,11 @@ export class RichText extends Component {
 
 		this.usedDeprecatedChildrenSource = Array.isArray( value );
 		this.lastHistoryValue = value;
+
+		// Internal values that are update synchronously, unlike props.
+		this.value = value;
+		this.selectionStart = selectionStart;
+		this.selectionEnd = selectionEnd;
 	}
 
 	componentWillUnmount() {
@@ -356,11 +360,7 @@ export class RichText extends Component {
 			unstableOnFocus();
 		}
 
-		const { start, end } = this.createRecord();
-
-		this.onSelectionChange( start, end );
-		this.savedSelectionStart = start;
-		this.savedSelectionEnd = end;
+		this.onSelectionChange();
 
 		document.addEventListener( 'selectionchange', this.onSelectionChange );
 	}
@@ -407,9 +407,9 @@ export class RichText extends Component {
 			selectedFormat = this.formatPlaceholder.length;
 
 			if ( selectedFormat > 0 ) {
-				formats[ this.props.selectionStart ] = this.formatPlaceholder;
+				formats[ this.selectionStart ] = this.formatPlaceholder;
 			} else {
-				delete formats[ this.props.selectionStart ];
+				delete formats[ this.selectionStart ];
 			}
 		} else if ( selectedFormat > 0 ) {
 			const formatsBefore = formats[ start - 1 ] || [];
@@ -423,9 +423,9 @@ export class RichText extends Component {
 
 			source = source.slice( 0, selectedFormat );
 
-			formats[ this.props.selectionStart ] = source;
+			formats[ this.selectionStart ] = source;
 		} else {
-			delete formats[ this.props.selectionStart ];
+			delete formats[ this.selectionStart ];
 		}
 
 		const change = { formats, replacements, text, start, end, selectedFormat };
@@ -469,7 +469,7 @@ export class RichText extends Component {
 		const value = this.createRecord();
 		const { start, end, formats } = value;
 
-		if ( start !== this.savedSelectionStart || end !== this.savedSelectionEnd ) {
+		if ( start !== this.selectionStart || end !== this.selectionEnd ) {
 			const isCaretWithinFormattedText = this.props.isCaretWithinFormattedText;
 
 			if ( ! isCaretWithinFormattedText && formats[ start ] ) {
@@ -488,11 +488,11 @@ export class RichText extends Component {
 				selectedFormat = Math.min( formatsBefore.length, formatsAfter.length );
 			}
 
-			this.applyRecord( { ...value, selectedFormat }, { domOnly: true } );
 			this.setState( { selectedFormat } );
+			this.applyRecord( { ...value, selectedFormat }, { domOnly: true } );
 			this.props.onSelectionChange( start, end );
-			this.savedSelectionStart = start;
-			this.savedSelectionEnd = end;
+			this.selectionStart = start;
+			this.selectionEnd = end;
 
 			delete this.formatPlaceholder;
 
@@ -546,12 +546,12 @@ export class RichText extends Component {
 		this.formatPlaceholder = formatPlaceholder;
 		this.onChangeEditableValue( record );
 
-		this.savedContent = this.valueToFormat( record );
-		this.props.onChange( this.savedContent );
+		this.value = this.valueToFormat( record );
+		this.props.onChange( this.value );
 		this.setState( { selectedFormat } );
 		this.props.onSelectionChange( start, end );
-		this.savedSelectionStart = start;
-		this.savedSelectionEnd = end;
+		this.selectionStart = start;
+		this.selectionEnd = end;
 
 		if ( ! withoutHistory ) {
 			this.onCreateUndoLevel();
@@ -560,12 +560,12 @@ export class RichText extends Component {
 
 	onCreateUndoLevel() {
 		// If the content is the same, no level needs to be created.
-		if ( this.lastHistoryValue === this.savedContent ) {
+		if ( this.lastHistoryValue === this.value ) {
 			return;
 		}
 
 		this.props.onCreateUndoLevel();
-		this.lastHistoryValue = this.savedContent;
+		this.lastHistoryValue = this.value;
 	}
 
 	/**
@@ -841,8 +841,8 @@ export class RichText extends Component {
 
 		this.setState( { selectedFormat: newSelectedFormat } );
 		this.props.onSelectionChange( newPos, newPos );
-		this.savedSelectionStart = newPos;
-		this.savedSelectionEnd = newPos;
+		this.selectionStart = newPos;
+		this.selectionEnd = newPos;
 		this.applyRecord( {
 			...value,
 			start: newPos,
@@ -932,14 +932,14 @@ export class RichText extends Component {
 		let shouldReapply = (
 			tagName === prevProps.tagName &&
 			value !== prevProps.value &&
-			value !== this.savedContent
+			value !== this.value
 		);
 
 		// Check if the selection changed.
 		shouldReapply = shouldReapply || (
 			isSelected && ! prevProps.isSelected && (
-				this.savedSelectionStart !== record.start ||
-				this.savedSelectionEnd !== record.end
+				this.selectionStart !== record.start ||
+				this.selectionEnd !== record.end
 			)
 		);
 
@@ -968,9 +968,9 @@ export class RichText extends Component {
 			this.applyRecord( record );
 		}
 
-		this.savedContent = value;
-		this.savedSelectionStart = record.start;
-		this.savedSelectionEnd = record.end;
+		this.value = value;
+		this.selectionStart = record.start;
+		this.selectionEnd = record.end;
 	}
 
 	/**
