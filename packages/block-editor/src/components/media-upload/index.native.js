@@ -1,21 +1,78 @@
 /**
- * WordPress dependencies
+ * External dependencies
  */
 import React from 'react';
 import { View } from 'react-native';
+import {
+	subscribeMediaUpload,
+	requestMediaPickFromMediaLibrary,
+	requestMediaPickFromDeviceLibrary,
+	requestMediaPickFromDeviceCamera,
+	mediaUploadSync,
+	requestImageFailedRetryDialog,
+	requestImageUploadCancelDialog,
+} from 'react-native-gutenberg-bridge';
 
+/**
+ * WordPress dependencies
+ */
 import { __ } from '@wordpress/i18n';
 import Picker from '../../../../editor/src/components/mobile/picker/';
+
+const MEDIA_UPLOAD_STATE_UPLOADING = 1;
+const MEDIA_UPLOAD_STATE_SUCCEEDED = 2;
+const MEDIA_UPLOAD_STATE_FAILED = 3;
+const MEDIA_UPLOAD_STATE_RESET = 4;
 
 const MEDIA_UPLOAD_BOTTOM_SHEET_VALUE_CHOOSE_FROM_DEVICE = 'choose_from_device';
 const MEDIA_UPLOAD_BOTTOM_SHEET_VALUE_TAKE_PHOTO = 'take_photo';
 const MEDIA_UPLOAD_BOTTOM_SHEET_VALUE_WORD_PRESS_LIBRARY = 'wordpress_media_library';
 
 class MediaUpload extends React.Component {
-	//picker: Picker;
 
 	constructor( props ) {
 		super( props );
+		this.addMediaUploadListener = this.addMediaUploadListener.bind( this );
+
+	}
+
+	mediaUpload( payload ) {
+		const { attributes } = this.props;
+
+		if ( payload.mediaId !== attributes.id ) {
+			return;
+		}
+
+		switch ( payload.state ) {
+			case MEDIA_UPLOAD_STATE_UPLOADING:
+				this.props.onUpdateMediaProgress( payload );
+				break;
+			case MEDIA_UPLOAD_STATE_SUCCEEDED:
+				this.onFinishMediaUploadWithSuccess( payload );
+				break;
+			case MEDIA_UPLOAD_STATE_FAILED:
+				this.onFinishMediaUploadWithFailure( payload );
+				break;
+			case MEDIA_UPLOAD_STATE_RESET:
+				this.onMediaUploadStateReset( payload );
+				break;
+		}
+	}
+
+	addMediaUploadListener() {
+		//if we already have a subscription not worth doing it again
+		if ( this.subscriptionParentMediaUpload ) {
+			return;
+		}
+		this.subscriptionParentMediaUpload = subscribeMediaUpload( ( payload ) => {
+			this.mediaUpload( payload );
+		} );
+	}
+
+	removeMediaUploadListener() {
+		if ( this.subscriptionParentMediaUpload ) {
+			this.subscriptionParentMediaUpload.remove();
+		}
 	}
 
 	getMediaOptionsItems() {
@@ -52,9 +109,7 @@ class MediaUpload extends React.Component {
 				} }
 			/>
 		);
-       /*  return (
-			<View/>
-		);*/
+
         return (
 			<View style={ { flex: 1 } }>
 				{ getMediaOptions() }
