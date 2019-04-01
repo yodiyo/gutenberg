@@ -28,15 +28,44 @@ const MEDIA_UPLOAD_BOTTOM_SHEET_VALUE_CHOOSE_FROM_DEVICE = 'choose_from_device';
 const MEDIA_UPLOAD_BOTTOM_SHEET_VALUE_TAKE_PHOTO = 'take_photo';
 const MEDIA_UPLOAD_BOTTOM_SHEET_VALUE_WORD_PRESS_LIBRARY = 'wordpress_media_library';
 
-class MediaUpload extends React.Component {
+type MediaPayload = {
+	mediaUrl: string,
+	progress: number,
+	mediaId: number,
+	mediaServerId: ?number,
+}
+
+type PropsType = {
+	onUpdateMediaProgress: ( payload: MediaPayload ) => void,
+	onFinishMediaUploadWithSuccess: ( payload: MediaPayload ) => void,
+	onFinishMediaUploadWithFailure: ( payload: MediaPayload ) => void,
+	onMediaUploadStateReset:( payload: MediaPayload ) => void,
+	onSelect: ( mediaId: number, mediaUrl: number ) => void,
+};
+
+type StateType = {
+	mediaId: ?number,
+};
+
+class MediaUpload extends React.Component<PropsType, StateType> {
 
 	constructor( props ) {
 		super( props );
-		this.addMediaUploadListener = this.addMediaUploadListener.bind( this );
 
+		this.state = {
+			progress: 0,
+			isUploadInProgress: false,
+			isUploadFailed: false,
+		};
+
+		this.addMediaUploadListener = this.addMediaUploadListener.bind( this );
 	}
 
-	mediaUpload( payload ) {
+	componentWillUnmount() {
+		this.removeMediaUploadListener();
+	}
+
+	mediaUpload( payload: MediaPayload ) {
 		const { attributes } = this.props;
 
 		if ( payload.mediaId !== attributes.id ) {
@@ -48,13 +77,14 @@ class MediaUpload extends React.Component {
 				this.props.onUpdateMediaProgress( payload );
 				break;
 			case MEDIA_UPLOAD_STATE_SUCCEEDED:
-				this.onFinishMediaUploadWithSuccess( payload );
+				this.removeMediaUploadListener();
+				this.props.onFinishMediaUploadWithSuccess( payload );
 				break;
 			case MEDIA_UPLOAD_STATE_FAILED:
-				this.onFinishMediaUploadWithFailure( payload );
+				this.props.onFinishMediaUploadWithFailure( payload );
 				break;
 			case MEDIA_UPLOAD_STATE_RESET:
-				this.onMediaUploadStateReset( payload );
+				this.props.onMediaUploadStateReset( payload );
 				break;
 		}
 	}
@@ -85,6 +115,35 @@ class MediaUpload extends React.Component {
 
 	render() {
 
+		const onMediaLibraryButtonPressed = () => {
+			requestMediaPickFromMediaLibrary( ( mediaId, mediaUrl ) => {
+				if ( mediaUrl ) {
+					this.props.onSelect( mediaId, mediaUrl );
+					//setAttributes( { id: mediaId, url: mediaUrl } );
+				}
+			} );
+		};
+
+		const onMediaUploadButtonPressed = () => {
+			requestMediaPickFromDeviceLibrary( ( mediaId, mediaUri ) => {
+				if ( mediaUri ) {
+					this.addMediaUploadListener();
+					this.props.onSelect( mediaId, mediaUrl );
+					//setAttributes( { url: mediaUri, id: mediaId } );
+				}
+			} );
+		};
+
+		const onMediaCaptureButtonPressed = () => {
+			requestMediaPickFromDeviceCamera( ( mediaId, mediaUri ) => {
+				if ( mediaUri ) {
+					this.addMediaUploadListener();
+					this.props.onSelect( mediaId, mediaUrl );
+					//setAttributes( { url: mediaUri, id: mediaId } );
+				}
+			} );
+		};
+
 		const mediaOptions = this.getMediaOptionsItems();
 
 		let picker;
@@ -100,11 +159,11 @@ class MediaUpload extends React.Component {
 				options={ mediaOptions }
 				onChange={ ( value ) => {
 					if ( value === MEDIA_UPLOAD_BOTTOM_SHEET_VALUE_CHOOSE_FROM_DEVICE ) {
-						//onMediaUploadButtonPressed();
+						onMediaUploadButtonPressed();
 					} else if ( value === MEDIA_UPLOAD_BOTTOM_SHEET_VALUE_TAKE_PHOTO ) {
-						//onMediaCaptureButtonPressed();
+						onMediaCaptureButtonPressed();
 					} else if ( value === MEDIA_UPLOAD_BOTTOM_SHEET_VALUE_WORD_PRESS_LIBRARY ) {
-						//onMediaLibraryButtonPressed();
+						onMediaLibraryButtonPressed();
 					}
 				} }
 			/>

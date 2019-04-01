@@ -3,7 +3,7 @@
  */
 import React from 'react';
 import { View, ImageBackground, TextInput, Text, TouchableWithoutFeedback } from 'react-native';
-import {
+/*import {
 	subscribeMediaUpload,
 	requestMediaPickFromMediaLibrary,
 	requestMediaPickFromDeviceLibrary,
@@ -12,7 +12,7 @@ import {
 	requestImageFailedRetryDialog,
 	requestImageUploadCancelDialog,
 } from 'react-native-gutenberg-bridge';
-
+*/
 /**
  * WordPress dependencies
  */
@@ -42,7 +42,7 @@ import { doAction, hasAction } from '@wordpress/hooks';
  */
 import ImageSize from './image-size';
 import styles from './styles.scss';
-
+/*
 const MEDIA_UPLOAD_STATE_UPLOADING = 1;
 const MEDIA_UPLOAD_STATE_SUCCEEDED = 2;
 const MEDIA_UPLOAD_STATE_FAILED = 3;
@@ -51,7 +51,7 @@ const MEDIA_UPLOAD_STATE_RESET = 4;
 const MEDIA_UPLOAD_BOTTOM_SHEET_VALUE_CHOOSE_FROM_DEVICE = 'choose_from_device';
 const MEDIA_UPLOAD_BOTTOM_SHEET_VALUE_TAKE_PHOTO = 'take_photo';
 const MEDIA_UPLOAD_BOTTOM_SHEET_VALUE_WORD_PRESS_LIBRARY = 'wordpress_media_library';
-
+*/
 const LINK_DESTINATION_CUSTOM = 'custom';
 const LINK_DESTINATION_NONE = 'none';
 
@@ -199,19 +199,19 @@ class ImageEdit extends React.Component {
 		} );
 	}
 
-	getMediaOptionsItems() {
+	/*getMediaOptionsItems() {
 		return [
 			{ icon: 'format-image', value: MEDIA_UPLOAD_BOTTOM_SHEET_VALUE_CHOOSE_FROM_DEVICE, label: __( 'Choose from device' ) },
 			{ icon: 'camera', value: MEDIA_UPLOAD_BOTTOM_SHEET_VALUE_TAKE_PHOTO, label: __( 'Take a Photo' ) },
 			{ icon: 'wordpress-alt', value: MEDIA_UPLOAD_BOTTOM_SHEET_VALUE_WORD_PRESS_LIBRARY, label: __( 'WordPress Media Library' ) },
 		];
-	}
+	}*/
 
 	render() {
 		const { attributes, isSelected, setAttributes } = this.props;
 		const { url, caption, height, width, alt, href } = attributes;
 
-		const onMediaLibraryButtonPressed = () => {
+		/*const onMediaLibraryButtonPressed = () => {
 			requestMediaPickFromMediaLibrary( ( mediaId, mediaUrl ) => {
 				if ( mediaUrl ) {
 					setAttributes( { id: mediaId, url: mediaUrl } );
@@ -235,7 +235,11 @@ class ImageEdit extends React.Component {
 					setAttributes( { url: mediaUri, id: mediaId } );
 				}
 			} );
-		};
+		};*/
+
+		const onImageSelect = ( mediaId: number, mediaUrl: number ) => {
+			setAttributes( { url: mediaUri, id: mediaId } );
+		} 
 
 		const onImageSettingsButtonPressed = () => {
 			this.setState( { showSettings: true } );
@@ -293,7 +297,7 @@ class ImageEdit extends React.Component {
 			</BottomSheet>
 		);
 
-		const mediaOptions = this.getMediaOptionsItems();
+	/*	const mediaOptions = this.getMediaOptionsItems();
 
 		const getMediaOptions = () => (
 			<Picker
@@ -310,23 +314,24 @@ class ImageEdit extends React.Component {
 					}
 				} }
 			/>
-		);
+		);*/
 									
 		if ( ! url ) {
 			return (
-			/*	<MediaUpload 	
+				<MediaUpload
+					onSelect={ onImageSelect }
 					render={ ( { open } ) => (
 						<MediaPlaceholder
 							onMediaOptionsPressed={ open }
 						/>
 					) }
-				/>*/
-				<View style={ { flex: 1 } } >
+				/>
+				/*<View style={ { flex: 1 } } >
 					{ getMediaOptions() }
 					<MediaPlaceholder
 						onMediaOptionsPressed={ onMediaOptionsButtonPressed }
 					/>
-				</View>
+				</View>*/
 
 			);
 		}
