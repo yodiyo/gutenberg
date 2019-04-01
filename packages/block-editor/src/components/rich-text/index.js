@@ -1178,6 +1178,7 @@ const RichTextContainer = compose( [
 		clientId,
 		instanceId,
 		identifier = instanceId,
+		isSelected,
 	} ) => {
 		// This should probably be moved to the block editor settings.
 		const { canUserUseUnfilteredHTML } = select( 'core/editor' );
@@ -1191,10 +1192,12 @@ const RichTextContainer = compose( [
 		const selectionStart = getSelectionStart();
 		const selectionEnd = getSelectionEnd();
 
-		const isSelected = (
-			selectionStart.block === clientId &&
-			selectionStart.identifier === identifier
-		);
+		if ( isSelected === undefined ) {
+			isSelected = (
+				selectionStart.block === clientId &&
+				selectionStart.identifier === identifier
+			);
+		}
 
 		return {
 			canUserUseUnfilteredHTML: canUserUseUnfilteredHTML(),
