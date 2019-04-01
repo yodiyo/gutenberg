@@ -5,7 +5,7 @@ const { camelCase, kebabCase, nth, upperFirst } = require( 'lodash' );
 
 const fs = require( 'fs' );
 
-const baseRepoUrl = `https://raw.githubusercontent.com/WordPress/gutenberg/master`;
+const baseURL = `..`;
 
 /**
  * Generates the package manifest.
@@ -16,11 +16,10 @@ const baseRepoUrl = `https://raw.githubusercontent.com/WordPress/gutenberg/maste
  */
 function getPackageManifest( packageFolderNames ) {
 	return packageFolderNames.map( ( folderName ) => {
-		const path = `${ baseRepoUrl }/packages/${ folderName }/README.md`;
 		return {
 			title: `@wordpress/${ folderName }`,
 			slug: `packages-${ folderName }`,
-			markdown_source: path,
+			markdown_source: `${ baseURL }/packages/${ folderName }/README.md`,
 			parent: 'packages',
 		};
 	} );
@@ -39,7 +38,7 @@ function getComponentManifest( componentPaths ) {
 		return {
 			title: upperFirst( camelCase( slug ) ),
 			slug,
-			markdown_source: `${ baseRepoUrl }/${ filePath }`,
+			markdown_source: `${ baseURL }/${ filePath }`,
 			parent: 'components',
 		};
 	} );
@@ -58,7 +57,7 @@ function getDataManifest( parsedNamespaces ) {
 		return {
 			title: parsedNamespace.title,
 			slug,
-			markdown_source: `${ baseRepoUrl }/docs/designers-developers/developers/data/${ slug }.md`,
+			markdown_source: `${ baseURL }/docs/designers-developers/developers/data/${ slug }.md`,
 			parent: 'data',
 		};
 	} );
@@ -93,7 +92,7 @@ function generateRootManifestFromTOCItems( items, parent = null ) {
 		pageItems.push( {
 			title,
 			slug,
-			markdown_source: `${ baseRepoUrl }\/${ fileName }`,
+			markdown_source: `${ baseURL }\/${ fileName }`,
 			parent,
 		} );
 		if ( Array.isArray( children ) && children.length ) {
