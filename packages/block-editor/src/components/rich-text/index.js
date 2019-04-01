@@ -133,7 +133,10 @@ export class RichText extends Component {
 		this.handleHorizontalNavigation = this.handleHorizontalNavigation.bind( this );
 		this.onPointerDown = this.onPointerDown.bind( this );
 
-		this.formatToValue = memize( this.formatToValue.bind( this ), { size: 1 } );
+		this.formatToValue = memize(
+			this.formatToValue.bind( this ),
+			{ maxSize: 1 }
+		);
 
 		this.savedContent = value;
 		this.patterns = getPatterns( {
@@ -821,7 +824,7 @@ export class RichText extends Component {
 		}
 
 		// Wait for boundary class to be added.
-		setTimeout( () => this.recalculateBoundaryStyle() );
+		this.props.setTimeout( () => this.recalculateBoundaryStyle() );
 
 		if ( newSelectedFormat !== selectedFormat ) {
 			this.applyRecord( { ...value, selectedFormat: newSelectedFormat } );
