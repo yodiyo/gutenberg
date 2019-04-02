@@ -9,7 +9,7 @@ $default-line-height: 1.4;
 $editor-font: "Noto Serif", serif;
 $editor-html-font: Menlo, Consolas, monaco, monospace;
 $editor-font-size: 16px;
-$default-block-margin: 2em; // Becomes 32px with the 16px base font size, which gives a nice 2px gap with the 14px block padding.
+$default-block-margin: 32px; // Why not ems? Because 32px provides a consistent block spacing based on the 16px font size.
 $text-editor-font-size: 14px;
 $editor-line-height: 1.8;
 $big-font-size: 18px;
