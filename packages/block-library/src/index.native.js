@@ -110,8 +110,11 @@ export const registerCoreBlocks = () => {
 		more,
 		image,
 		nextpage,
-	].forEach( ( { name, settings } ) => {
-		registerBlockType( name, settings );
+	].forEach( ( { metadata, name, settings } ) => {
+		registerBlockType( name, {
+			...metadata,
+			...settings,
+		} );
 	} );
 };
 
