@@ -18,6 +18,7 @@ import {
  */
 import { __ } from '@wordpress/i18n';
 import Picker from '../../../../editor/src/components/mobile/picker/';
+import { isURL } from '@wordpress/url';
 
 const MEDIA_UPLOAD_STATE_UPLOADING = 1;
 const MEDIA_UPLOAD_STATE_SUCCEEDED = 2;
@@ -40,11 +41,15 @@ type PropsType = {
 	onFinishMediaUploadWithSuccess: ( payload: MediaPayload ) => void,
 	onFinishMediaUploadWithFailure: ( payload: MediaPayload ) => void,
 	onMediaUploadStateReset:( payload: MediaPayload ) => void,
-	onSelect: ( mediaId: number, mediaUrl: number ) => void,
+	onSelect: ( mediaId: number, mediaUrl: string ) => void,
+	innerRef: ( ref: MediaUpload ) => void,
+	mediaId: number,
+	mediaUrl: ?string,
 };
 
 type StateType = {
-	mediaId: ?number,
+	id: number,
+	url: ?string,
 };
 
 class MediaUpload extends React.Component<PropsType, StateType> {
@@ -53,47 +58,99 @@ class MediaUpload extends React.Component<PropsType, StateType> {
 		super( props );
 
 		this.state = {
+			id: props.mediaId,
+			url: props.mediaUrl,
 			progress: 0,
 			isUploadInProgress: false,
-			isUploadFailed: false,
+			isUploadFailed: false,	
 		};
 
-		this.addMediaUploadListener = this.addMediaUploadListener.bind( this );
+		this.mediaUpload = this.mediaUpload.bind( this );
+	}
+
+	componentDidMount() {
+		this.addMediaUploadListener();
+		if ( this.state.id !== this.props.mediaId ) {
+			this.setState( { id: this.props.mediaId, url: this.props.mediaUrl } );
+		}
+		if ( this.props.innerRef ) {
+			this.props.innerRef( this );
+		}
+
+		const { id, url } = this.state;
+
+		if ( id && ! isURL( url ) ) {
+			mediaUploadSync();
+		}
 	}
 
 	componentWillUnmount() {
 		this.removeMediaUploadListener();
 	}
 
+	/*static getDerivedStateFromProps( props, state ) {
+		return { ...state, id: props.mediaId, url: props.mediaUrl };
+	}
+*/
 	mediaUpload( payload: MediaPayload ) {
-		const { attributes } = this.props;
+		const { id } = this.state;
 
-		if ( payload.mediaId !== attributes.id ) {
+		if ( payload.mediaId !== id )  {
 			return;
 		}
 
 		switch ( payload.state ) {
 			case MEDIA_UPLOAD_STATE_UPLOADING:
-				this.props.onUpdateMediaProgress( payload );
+				console.log("MEDIA_UPLOAD_STATE_UPLOADING");
+				this.updateMediaProgress( payload );
 				break;
 			case MEDIA_UPLOAD_STATE_SUCCEEDED:
-				this.removeMediaUploadListener();
-				this.props.onFinishMediaUploadWithSuccess( payload );
+				console.log("MEDIA_UPLOAD_STATE_SUCCEEDED");
+				this.finishMediaUploadWithSuccess( payload );
 				break;
 			case MEDIA_UPLOAD_STATE_FAILED:
-				this.props.onFinishMediaUploadWithFailure( payload );
+				console.log("MEDIA_UPLOAD_STATE_FAILED");
+				this.finishMediaUploadWithFailure( payload );
 				break;
 			case MEDIA_UPLOAD_STATE_RESET:
-				this.props.onMediaUploadStateReset( payload );
+				console.log("MEDIA_UPLOAD_STATE_RESET");
+				this.mediaUploadStateReset( payload );
 				break;
 		}
 	}
 
-	addMediaUploadListener() {
-		//if we already have a subscription not worth doing it again
-		if ( this.subscriptionParentMediaUpload ) {
-			return;
+	requestImageUploadCancelDialog( mediaId ) {
+		requestImageUploadCancelDialog( mediaId );
+	} 
+
+	requestImageFailedRetryDialog( mediaId ) {
+		requestImageFailedRetryDialog( mediaId );
+	}
+
+	updateMediaProgress( payload ) {
+		if ( payload.mediaUrl ) {
+			this.setState( { url: payload.mediaUrl } );
 		}
+		this.props.onUpdateMediaProgress( payload );
+	}
+
+	finishMediaUploadWithSuccess( payload ) {
+		this.setState( { id: payload.mediaServerId } );
+		this.props.onFinishMediaUploadWithSuccess( payload );
+	}
+
+	finishMediaUploadWithFailure( payload ) {
+		this.setState( { id: payload.mediaId } );
+		this.props.onFinishMediaUploadWithFailure( payload );
+	}
+
+	mediaUploadStateReset( payload ) {
+		this.setState( { url: null, id: payload.mediaId } );
+		this.props.onMediaUploadStateReset( payload );
+	}
+
+	addMediaUploadListener() {
+		console.log("addMediaUploadListener");
 		this.subscriptionParentMediaUpload = subscribeMediaUpload( ( payload ) => {
 			this.mediaUpload( payload );
 		} );
@@ -101,6 +158,7 @@ class MediaUpload extends React.Component<PropsType, StateType> {
 
 	removeMediaUploadListener() {
 		if ( this.subscriptionParentMediaUpload ) {
+			console.log("removeMediaUploadListener");
 			this.subscriptionParentMediaUpload.remove();
 		}
 	}
@@ -118,28 +176,26 @@ class MediaUpload extends React.Component<PropsType, StateType> {
 		const onMediaLibraryButtonPressed = () => {
 			requestMediaPickFromMediaLibrary( ( mediaId, mediaUrl ) => {
 				if ( mediaUrl ) {
+					this.setState( { id: mediaId, url: mediaUrl } );
 					this.props.onSelect( mediaId, mediaUrl );
-					//setAttributes( { id: mediaId, url: mediaUrl } );
 				}
 			} );
 		};
 
 		const onMediaUploadButtonPressed = () => {
-			requestMediaPickFromDeviceLibrary( ( mediaId, mediaUri ) => {
-				if ( mediaUri ) {
-					this.addMediaUploadListener();
+			requestMediaPickFromDeviceLibrary( ( mediaId, mediaUrl ) => {
+				if ( mediaUrl ) {
+					this.setState( { url: mediaUrl, id: mediaId } );
 					this.props.onSelect( mediaId, mediaUrl );
-					//setAttributes( { url: mediaUri, id: mediaId } );
 				}
 			} );
 		};
 
 		const onMediaCaptureButtonPressed = () => {
-			requestMediaPickFromDeviceCamera( ( mediaId, mediaUri ) => {
-				if ( mediaUri ) {
-					this.addMediaUploadListener();
+			requestMediaPickFromDeviceCamera( ( mediaId, mediaUrl ) => {
+				if ( mediaUrl ) {
+					this.setState( { url: mediaUrl, id: mediaId } );
 					this.props.onSelect( mediaId, mediaUrl );
-					//setAttributes( { url: mediaUri, id: mediaId } );
 				}
 			} );
 		};
@@ -168,16 +224,8 @@ class MediaUpload extends React.Component<PropsType, StateType> {
 				} }
 			/>
 		);
-
-        return (
-			<View style={ { flex: 1 } }>
-				{ getMediaOptions() }
-				{ this.props.render( { open: onPickerPresent } ) }
-			</View>
-		);
-
+        return this.props.render( { open: onPickerPresent, getMediaOptions: getMediaOptions } );
 	}
-
 }
 
 export default MediaUpload;

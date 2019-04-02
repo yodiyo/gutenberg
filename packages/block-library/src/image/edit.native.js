@@ -3,16 +3,7 @@
  */
 import React from 'react';
 import { View, ImageBackground, TextInput, Text, TouchableWithoutFeedback } from 'react-native';
-/*import {
-	subscribeMediaUpload,
-	requestMediaPickFromMediaLibrary,
-	requestMediaPickFromDeviceLibrary,
-	requestMediaPickFromDeviceCamera,
-	mediaUploadSync,
-	requestImageFailedRetryDialog,
-	requestImageUploadCancelDialog,
-} from 'react-native-gutenberg-bridge';
-*/
+
 /**
  * WordPress dependencies
  */
@@ -42,20 +33,13 @@ import { doAction, hasAction } from '@wordpress/hooks';
  */
 import ImageSize from './image-size';
 import styles from './styles.scss';
-/*
-const MEDIA_UPLOAD_STATE_UPLOADING = 1;
-const MEDIA_UPLOAD_STATE_SUCCEEDED = 2;
-const MEDIA_UPLOAD_STATE_FAILED = 3;
-const MEDIA_UPLOAD_STATE_RESET = 4;
 
-const MEDIA_UPLOAD_BOTTOM_SHEET_VALUE_CHOOSE_FROM_DEVICE = 'choose_from_device';
-const MEDIA_UPLOAD_BOTTOM_SHEET_VALUE_TAKE_PHOTO = 'take_photo';
-const MEDIA_UPLOAD_BOTTOM_SHEET_VALUE_WORD_PRESS_LIBRARY = 'wordpress_media_library';
-*/
 const LINK_DESTINATION_CUSTOM = 'custom';
 const LINK_DESTINATION_NONE = 'none';
 
 class ImageEdit extends React.Component {
+	mediaUploadRef: MediaUpload;
+
 	constructor( props ) {
 		super( props );
 
@@ -66,26 +50,17 @@ class ImageEdit extends React.Component {
 			isUploadFailed: false,
 		};
 
-		this.mediaUpload = this.mediaUpload.bind( this );
-		this.addMediaUploadListener = this.addMediaUploadListener.bind( this );
-		this.removeMediaUploadListener = this.removeMediaUploadListener.bind( this );
 		this.finishMediaUploadWithSuccess = this.finishMediaUploadWithSuccess.bind( this );
 		this.finishMediaUploadWithFailure = this.finishMediaUploadWithFailure.bind( this );
 		this.updateMediaProgress = this.updateMediaProgress.bind( this );
+		this.mediaUploadStateReset = this.mediaUploadStateReset.bind( this );
 		this.updateAlt = this.updateAlt.bind( this );
 		this.updateImageURL = this.updateImageURL.bind( this );
 		this.onSetLinkDestination = this.onSetLinkDestination.bind( this );
 		this.onImagePressed = this.onImagePressed.bind( this );
 		this.onClearSettings = this.onClearSettings.bind( this );
-	}
-
-	componentDidMount() {
-		const { attributes } = this.props;
-
-		if ( attributes.id && ! isURL( attributes.url ) ) {
-			this.addMediaUploadListener();
-			mediaUploadSync();
-		}
+		this.mediaUploadInnerRef = this.mediaUploadInnerRef.bind( this );
+		this.onImageSelect = this.onImageSelect.bind( this );
 	}
 
 	componentWillUnmount() {
@@ -93,39 +68,15 @@ class ImageEdit extends React.Component {
 		if ( hasAction( 'blocks.onRemoveBlockCheckUpload' ) && this.state.isUploadInProgress ) {
 			doAction( 'blocks.onRemoveBlockCheckUpload', this.props.attributes.id );
 		}
-		this.removeMediaUploadListener();
 	}
 
 	onImagePressed() {
 		const { attributes } = this.props;
 
 		if ( this.state.isUploadInProgress ) {
-			requestImageUploadCancelDialog( attributes.id );
+			this.mediaUploadRef.requestImageUploadCancelDialog( attributes.id );
 		} else if ( attributes.id && ! isURL( attributes.url ) ) {
-			requestImageFailedRetryDialog( attributes.id );
-		}
-	}
-
-	mediaUpload( payload ) {
-		const { attributes } = this.props;
-
-		if ( payload.mediaId !== attributes.id ) {
-			return;
-		}
-
-		switch ( payload.state ) {
-			case MEDIA_UPLOAD_STATE_UPLOADING:
-				this.updateMediaProgress( payload );
-				break;
-			case MEDIA_UPLOAD_STATE_SUCCEEDED:
-				this.finishMediaUploadWithSuccess( payload );
-				break;
-			case MEDIA_UPLOAD_STATE_FAILED:
-				this.finishMediaUploadWithFailure( payload );
-				break;
-			case MEDIA_UPLOAD_STATE_RESET:
-				this.mediaUploadStateReset( payload );
-				break;
+			this.mediaUploadRef.requestImageFailedRetryDialog( attributes.id );
 		}
 	}
 
@@ -139,41 +90,24 @@ class ImageEdit extends React.Component {
 
 	finishMediaUploadWithSuccess( payload ) {
 		const { setAttributes } = this.props;
-
 		setAttributes( { url: payload.mediaUrl, id: payload.mediaServerId } );
 		this.setState( { isUploadInProgress: false } );
-
-		this.removeMediaUploadListener();
 	}
 
 	finishMediaUploadWithFailure( payload ) {
 		const { setAttributes } = this.props;
-
 		setAttributes( { id: payload.mediaId } );
 		this.setState( { isUploadInProgress: false, isUploadFailed: true } );
 	}
 
 	mediaUploadStateReset( payload ) {
 		const { setAttributes } = this.props;
-
 		setAttributes( { id: payload.mediaId, url: null } );
 		this.setState( { isUploadInProgress: false, isUploadFailed: false } );
 	}
 
-	addMediaUploadListener() {
-		//if we already have a subscription not worth doing it again
-		if ( this.subscriptionParentMediaUpload ) {
-			return;
-		}
-		this.subscriptionParentMediaUpload = subscribeMediaUpload( ( payload ) => {
-			this.mediaUpload( payload );
-		} );
-	}
-
-	removeMediaUploadListener() {
-		if ( this.subscriptionParentMediaUpload ) {
-			this.subscriptionParentMediaUpload.remove();
-		}
+	mediaUploadInnerRef( ref ) {
+		this.mediaUploadRef = ref;
 	}
 
 	updateAlt( newAlt ) {
@@ -199,47 +133,31 @@ class ImageEdit extends React.Component {
 		} );
 	}
 
-	/*getMediaOptionsItems() {
-		return [
-			{ icon: 'format-image', value: MEDIA_UPLOAD_BOTTOM_SHEET_VALUE_CHOOSE_FROM_DEVICE, label: __( 'Choose from device' ) },
-			{ icon: 'camera', value: MEDIA_UPLOAD_BOTTOM_SHEET_VALUE_TAKE_PHOTO, label: __( 'Take a Photo' ) },
-			{ icon: 'wordpress-alt', value: MEDIA_UPLOAD_BOTTOM_SHEET_VALUE_WORD_PRESS_LIBRARY, label: __( 'WordPress Media Library' ) },
-		];
-	}*/
+	renderWithMediaUpload(render: () => React.Node ) {
+		const { attributes } = this.props;
+		return (
+			 <MediaUpload
+				innerRef={ this.mediaUploadInnerRef }
+				mediaId={ attributes.id }
+				mediaUrl={ attributes.url }
+				onUpdateMediaProgress={ this.updateMediaProgress }
+				onFinishMediaUploadWithSuccess={ this.finishMediaUploadWithSuccess }
+				onFinishMediaUploadWithFailure={ this.finishMediaUploadWithFailure }
+				onMediaUploadStateReset={ this.mediaUploadStateReset }
+				onSelect={ this.onImageSelect }
+				render={ render }
+			/>
+		);
+	}
+
+	onImageSelect( mediaId: number, mediaUrl: number ) {
+		const { setAttributes } = this.props;
+		setAttributes( { url: mediaUrl, id: mediaId } );
+	} 
 
 	render() {
 		const { attributes, isSelected, setAttributes } = this.props;
 		const { url, caption, height, width, alt, href } = attributes;
-
-		/*const onMediaLibraryButtonPressed = () => {
-			requestMediaPickFromMediaLibrary( ( mediaId, mediaUrl ) => {
-				if ( mediaUrl ) {
-					setAttributes( { id: mediaId, url: mediaUrl } );
-				}
-			} );
-		};
-
-		const onMediaUploadButtonPressed = () => {
-			requestMediaPickFromDeviceLibrary( ( mediaId, mediaUri ) => {
-				if ( mediaUri ) {
-					this.addMediaUploadListener( );
-					setAttributes( { url: mediaUri, id: mediaId } );
-				}
-			} );
-		};
-
-		const onMediaCaptureButtonPressed = () => {
-			requestMediaPickFromDeviceCamera( ( mediaId, mediaUri ) => {
-				if ( mediaUri ) {
-					this.addMediaUploadListener( );
-					setAttributes( { url: mediaUri, id: mediaId } );
-				}
-			} );
-		};*/
-
-		const onImageSelect = ( mediaId: number, mediaUrl: number ) => {
-			setAttributes( { url: mediaUri, id: mediaId } );
-		} 
 
 		const onImageSettingsButtonPressed = () => {
 			this.setState( { showSettings: true } );
@@ -255,14 +173,17 @@ class ImageEdit extends React.Component {
 			picker.presentPicker();
 		};
 
-		const toolbarEditButton = (
-			<Toolbar>
-				<ToolbarButton
-					label={ __( 'Edit image' ) }
-					icon="edit"
-					onClick={ onMediaOptionsButtonPressed }
-				/>
-			</Toolbar>
+		const toolbarEditButton = this.renderWithMediaUpload( 
+			( { open, getMediaOptions } ) => (
+				<Toolbar>
+					<ToolbarButton
+						label={ __( 'Edit image' ) }
+						icon="edit"
+						onClick={ open }
+					/>
+					{ getMediaOptions() }
+				</Toolbar>
+			)
 		);
 
 		const getInspectorControls = () => (
@@ -296,44 +217,16 @@ class ImageEdit extends React.Component {
 				/>
 			</BottomSheet>
 		);
-
-	/*	const mediaOptions = this.getMediaOptionsItems();
-
-		const getMediaOptions = () => (
-			<Picker
-				hideCancelButton={ true }
-				ref={ ( instance ) => picker = instance }
-				options={ mediaOptions }
-				onChange={ ( value ) => {
-					if ( value === MEDIA_UPLOAD_BOTTOM_SHEET_VALUE_CHOOSE_FROM_DEVICE ) {
-						onMediaUploadButtonPressed();
-					} else if ( value === MEDIA_UPLOAD_BOTTOM_SHEET_VALUE_TAKE_PHOTO ) {
-						onMediaCaptureButtonPressed();
-					} else if ( value === MEDIA_UPLOAD_BOTTOM_SHEET_VALUE_WORD_PRESS_LIBRARY ) {
-						onMediaLibraryButtonPressed();
-					}
-				} }
-			/>
-		);*/
-									
+						
 		if ( ! url ) {
-			return (
-				<MediaUpload
-					onSelect={ onImageSelect }
-					render={ ( { open } ) => (
-						<MediaPlaceholder
-							onMediaOptionsPressed={ open }
-						/>
-					) }
-				/>
-				/*<View style={ { flex: 1 } } >
-					{ getMediaOptions() }
+			return this.renderWithMediaUpload( ( { open, getMediaOptions } ) => (
+				<View style={ { flex: 1 } } >
 					<MediaPlaceholder
-						onMediaOptionsPressed={ onMediaOptionsButtonPressed }
+						onMediaOptionsPressed={ open }
 					/>
-				</View>*/
-
-			);
+					{ getMediaOptions() }
+				</View>
+			) );
 		}
 
 		const showSpinner = this.state.isUploadInProgress;
@@ -343,6 +236,7 @@ class ImageEdit extends React.Component {
 		return (
 			<TouchableWithoutFeedback onPress={ this.onImagePressed } disabled={ ! isSelected }>
 				<View style={ { flex: 1 } }>
+					{ this.renderWithMediaUpload( () => () ) }
 					{ showSpinner && <Spinner progress={ progress } /> }
 					<BlockControls>
 						{ toolbarEditButton }
@@ -374,7 +268,6 @@ class ImageEdit extends React.Component {
 							return (
 								<View style={ { flex: 1 } } >
 									{ getInspectorControls() }
-									{ getMediaOptions() }
 									{ ! imageWidthWithinContainer && <View style={ styles.imageContainer } >
 										<Dashicon icon={ 'format-image' } size={ 300 } />
 									</View> }
