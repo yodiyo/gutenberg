@@ -128,6 +128,7 @@ class GalleryImage extends Component {
 		/* eslint-disable jsx-a11y/no-noninteractive-element-interactions, jsx-a11y/onclick-has-role, jsx-a11y/click-events-have-key-events */
 		return (
 			<figure className={ className } tabIndex="-1" onKeyDown={ this.onKeyDown } ref={ this.bindContainer }>
+				{ href ? <a href={ href }>{ img }</a> : img }
 				{ isSelected &&
 					<div className="block-library-gallery-item__inline-menu">
 						<IconButton
@@ -138,7 +139,6 @@ class GalleryImage extends Component {
 						/>
 					</div>
 				}
-				{ href ? <a href={ href }>{ img }</a> : img }
 				{ ( ! RichText.isEmpty( caption ) || isSelected ) ? (
 					<RichText
 						tagName="figcaption"
